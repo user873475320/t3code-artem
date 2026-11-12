@@ -1,0 +1,52 @@
+/* Personal default palette. Explicitly selected themes keep their own controls. */
+html:not([data-theme-id]) {
+  --primary: #7560aa;
+  --primary-foreground: #fff;
+  --ring: #7560aa;
+  --accent: #eae4f5;
+  --accent-foreground: #252231;
+  --message-action: #7560aa;
+  --message-action-foreground: #fff;
+  --message-action-hover: #614b94;
+  --update: #7560aa;
+  --update-foreground: #7560aa;
+  --update-surface: #eae4f5;
+  --sidebar-row-selected: #eae4f5;
+}
+
+html.dark:not([data-theme-id]) {
+  --primary: #8b7bc8;
+  --primary-foreground: #121118;
+  --ring: #9d8ed6;
+  --accent: #302a46;
+  --accent-foreground: #f1eff5;
+  --message-action: #8b7bc8;
+  --message-action-foreground: #121118;
+  --message-action-hover: #9d8ed6;
+  --update: #8b7bc8;
+  --update-foreground: #9d8ed6;
+  --update-surface: #302a46;
+  --sidebar-row-selected: #302a46;
+}
+
+html:not([data-theme-id]),
+[data-aa-brand-header] {
+  --stage-art-top: #9d8ed6;
+  --stage-art-mid: #7560aa;
+  --stage-art-bottom: #302a46;
+  --stage-art-highlight: #f1eaff;
+  --stage-art-secondary: #b1a0e2;
+  --stage-art-tertiary: #8b7bc8;
+  --stage-art-line: #f1eaff;
+  --stage-art-celeste-highlight: #f1eaff;
+  --stage-art-celeste-secondary: #b1a0e2;
+  --stage-art-violet-highlight: #d8caf5;
+  --stage-art-grid-line: #ded3f3;
+}
+
+html.dark:not([data-theme-id]),
+.dark [data-aa-brand-header] {
+  --stage-art-top: #7560aa;
+  --stage-art-mid: #4f3d76;
+  --stage-art-bottom: #21182f;
+}

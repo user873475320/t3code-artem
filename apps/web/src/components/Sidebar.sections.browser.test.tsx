@@ -58,7 +58,7 @@ it("moves a thread into a collapsed personal section and retains the assignment 
     await expect
       .element(page.getByRole("button", { name: /^render/ }))
       .toHaveAttribute("aria-expanded", "true");
-    await userEvent.click(page.getByRole("button", { name: "Включить мои разделы" }));
+    await userEvent.click(page.getByRole("button", { name: "Мои разделы", exact: true }));
     const target = page.getByRole("button", { name: "Разработка: 0", exact: true });
     await userEvent.click(target);
     await expect.element(target).toHaveAttribute("aria-expanded", "false");

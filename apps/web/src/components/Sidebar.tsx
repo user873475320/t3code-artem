@@ -76,6 +76,7 @@ import {
   ChevronDownIcon,
   FolderIcon,
   ListFilterIcon,
+  PanelsTopLeftIcon,
   PlusIcon,
   SettingsIcon,
 } from "lucide-react";
@@ -3140,6 +3141,20 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           <SidebarGroup className="z-[1]">
             <SidebarThreadHeader
               hasProjects={projectGroups.length > 0}
+              sectionToggle={
+                <SidebarHeaderIconButton
+                  label="Мои разделы"
+                  aria-pressed={customSections.enabled}
+                  tooltip={
+                    customSections.enabled ? "Показать обычный список" : "Показать мои разделы"
+                  }
+                  onClick={() =>
+                    setCustomSections((state) => ({ ...state, enabled: !state.enabled }))
+                  }
+                >
+                  <PanelsTopLeftIcon />
+                </SidebarHeaderIconButton>
+              }
               projectScope={
                 <Combobox
                   items={projectScopeItems}
@@ -3365,14 +3380,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               activeSearchResultIndex={activeSearchResultIndex}
               onClearSearch={clearThreadSearch}
             />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCustomSections((state) => ({ ...state, enabled: !state.enabled }))}
-              title="Разделы сохраняются только в этом приложении"
-            >
-              {customSections.enabled ? "Мои разделы · сменить вид" : "Включить мои разделы"}
-            </Button>
           </SidebarGroup>
         }
       >
