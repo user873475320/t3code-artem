@@ -3,6 +3,23 @@
 Use a new thread for a separate task. Choose **New worktree** when its code changes
 need a separate branch and working directory.
 
+## Personal sections (Artem fork)
+
+Choose **Включить мои разделы** above the thread list to organize chats into your
+own named sections. Drag a chat onto a section heading, including a collapsed
+section, or right-click it and choose **Переместить в раздел**. Drag within a section
+to change the order. The section menu renames, reorders, or removes the section;
+removing it keeps its chats under **Без раздела**. **Загрузить ещё чаты** reveals older
+history. Switch back to the standard sidebar with **Мои разделы · сменить вид**.
+
+Sections are saved on this computer, independently of the agent's active, pinned,
+snoozed, or settled state. Moving a chat does not start or stop the agent. Sections
+do not sync to another computer or the mobile app. A disconnected environment or
+a project filter hides its chats without clearing their section assignments.
+
+The development app uses a separate copy of history. New conversations and edits
+in that copy are not synchronized with the official app.
+
 ## Start a thread
 
 On web and desktop, **New thread** opens the project picker when you have more than one
