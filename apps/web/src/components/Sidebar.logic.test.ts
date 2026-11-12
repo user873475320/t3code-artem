@@ -308,7 +308,7 @@ describe("resolveSidebarThreadStatus", () => {
         ...idle,
         runtime: { ...runtime, status: "idle" as const, lastError: "persisted" },
       }),
-    ).toBe("waiting");
+    ).toBe("ready");
   });
 });
 
@@ -431,20 +431,28 @@ describe("resolveThreadStatusPill", () => {
     });
   });
 
-  it("shows waiting for an idle thread with pending background tasks", () => {
+  it("shows waiting only when an idle thread has pending background work", () => {
+    const idle = {
+      ...baseThread,
+      runtime: { ...baseThread.runtime, status: "idle" as const, activeRunId: null },
+    };
+    expect(resolveSidebarThreadStatus(idle)).toBe("ready");
+    expect(resolveThreadStatusPill({ thread: idle })).toBeNull();
+    const waiting = {
+      ...idle,
+      pendingBackgroundTasks: [
+        {
+          taskId: "bg-1",
+          description: "Watch build",
+          kind: "monitor" as const,
+          awaited: true as const,
+        },
+      ],
+    };
+    expect(resolveSidebarThreadStatus(waiting)).toBe("waiting");
     expect(
       resolveThreadStatusPill({
-        thread: {
-          ...baseThread,
-          pendingBackgroundTasks: [
-            { taskId: "bg-1", description: "Watch build", kind: "monitor", awaited: true },
-          ],
-          runtime: {
-            ...baseThread.runtime,
-            status: "idle",
-            activeRunId: null,
-          },
-        },
+        thread: waiting,
       }),
     ).toMatchObject({
       label: "Waiting",
@@ -1631,9 +1639,19 @@ describe("resolveSidebarFolderDot", () => {
     };
 
     expect(resolveSidebarFolderDot([idle])).toBeNull();
-    // A waiting thread stays quiet even with an unread completion, like its row.
+    const idleRuntime = { ...runtime, status: "idle" as const };
+    expect(resolveSidebarFolderDot([{ ...unread, runtime: idleRuntime }])).toBe("unread");
+    // Actual background work keeps the waiting thread quiet until it completes.
     expect(
-      resolveSidebarFolderDot([{ ...unread, runtime: { ...runtime, status: "idle" as const } }]),
+      resolveSidebarFolderDot([
+        {
+          ...unread,
+          runtime: idleRuntime,
+          pendingBackgroundTasks: [
+            { taskId: "bg-1", description: "Watch build", kind: "monitor", awaited: true },
+          ],
+        },
+      ]),
     ).toBeNull();
     expect(resolveSidebarFolderDot([idle, working])).toBe("working");
     expect(resolveSidebarFolderDot([working, unread])).toBe("unread");
