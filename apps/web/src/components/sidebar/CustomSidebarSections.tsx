@@ -19,6 +19,7 @@ import { cn, randomUUID } from "~/lib/utils";
 import { SidebarPointerSensor } from "../Sidebar.pointer";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 import {
   Dialog,
   DialogPopup,
@@ -32,6 +33,7 @@ import { Menu, MenuTrigger, MenuPopup, MenuItem } from "../ui/menu";
 import { TooltipProvider } from "../ui/tooltip";
 import {
   groupCustomSections,
+  parseCustomSectionsSnapshot,
   moveSectionThread,
   removeCustomSection,
   reorderCustomSection,
@@ -157,6 +159,8 @@ export function CustomSidebarSections({
   treeRef: RefCallback<HTMLUListElement>;
 }) {
   const [editing, setEditing] = useState<{ id: string | null; name: string } | null>(null);
+  const [snapshot, setSnapshot] = useState<string | null>(null);
+  const importedState = snapshot === null ? null : parseCustomSectionsSnapshot(snapshot);
   const sensors = useSensors(
     useSensor(SidebarPointerSensor, { distance: 6, onAttach: () => {}, onFinish: () => {} }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -171,14 +175,25 @@ export function CustomSidebarSections({
     <>
       <div className="flex items-center justify-between px-2 py-1">
         <span className="text-xs text-sidebar-muted-foreground">Мои разделы</span>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label="Добавить раздел"
-          onClick={() => setEditing({ id: null, name: "" })}
-        >
-          <PlusIcon />
-        </Button>
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Перенести разделы"
+            title="Импорт и экспорт разделов"
+            onClick={() => setSnapshot(JSON.stringify(state, null, 2))}
+          >
+            <MoreHorizontalIcon />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Добавить раздел"
+            onClick={() => setEditing({ id: null, name: "" })}
+          >
+            <PlusIcon />
+          </Button>
+        </div>
       </div>
       <TooltipProvider delay={150}>
         <DndContext
@@ -235,6 +250,54 @@ export function CustomSidebarSections({
           </ul>
         </DndContext>
       </TooltipProvider>
+      {snapshot !== null ? (
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setSnapshot(null);
+          }}
+        >
+          <DialogPopup>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!importedState) return;
+                setState(() => importedState);
+                setSnapshot(null);
+              }}
+            >
+              <DialogHeader>
+                <DialogTitle>Перенести разделы</DialogTitle>
+                <DialogDescription>
+                  Скопируйте текущую структуру или вставьте сохранённую. Применение заменит разделы,
+                  их порядок и распределение чатов. Сами чаты сохранятся.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogPanel>
+                <Textarea
+                  aria-label="Структура разделов JSON"
+                  rows={8}
+                  value={snapshot}
+                  onChange={(event) => setSnapshot(event.target.value)}
+                />
+                <p className="mt-2 text-sm text-muted-foreground" role="status">
+                  {importedState
+                    ? `${importedState.sections.length} разделов, ${importedState.sections.reduce((sum, section) => sum + section.threadKeys.length, 0)} привязок чатов. Чаты из другой среды нужно импортировать отдельно.`
+                    : "Некорректная структура: проверьте формат, названия и повторяющиеся чаты."}
+                </p>
+              </DialogPanel>
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => setSnapshot(null)}>
+                  Закрыть
+                </Button>
+                <Button type="submit" disabled={!importedState}>
+                  Применить структуру
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogPopup>
+        </Dialog>
+      ) : null}
       {editing ? (
         <Dialog
           open

@@ -160,7 +160,7 @@ import {
 import { environmentPresentations } from "../state/presentation";
 import { primaryServerKeybindingsAtom } from "../state/server";
 import { environmentProjects } from "../state/projects";
-import { threadEnvironment } from "../state/threads";
+import { threadEnvironment, threadFamilies } from "../state/threads";
 import { useOlderSettledShelf, useOlderSettledShelfGrowth } from "../state/olderSettledShelf";
 import { useThreadSearch } from "../state/queries";
 import { useOrchestrationCommand } from "../state/use-orchestration-command";
@@ -449,6 +449,28 @@ function useSidebarThreads(input: {
     folderGroups,
     keepEmptyFolders: keepEmpty,
   } = input;
+  const customFamilyKeys = JSON.stringify(
+    input.customSections.enabled
+      ? [...new Set(input.customSections.sections.flatMap((section) => section.threadKeys))]
+          .filter((key) => {
+            const ref = parseScopedThreadKey(key);
+            return ref !== null && connectedEnvironmentIds.includes(ref.environmentId);
+          })
+          .sort()
+      : [],
+  );
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- holds assigned thread families in the registry even when the shell omits older settled chats
+  useEffect(() => {
+    const releases = (JSON.parse(customFamilyKeys) as string[]).flatMap((key) => {
+      const ref = parseScopedThreadKey(key);
+      return ref === null
+        ? []
+        : [threadFamilies.mount(appAtomRegistry, ref.environmentId, ref.threadId)];
+    });
+    return () => {
+      for (const release of releases) release();
+    };
+  }, [customFamilyKeys]);
   // Folders already separate the work, so boring mode has no Working shelf.
   const workingShelfEnabled =
     useClientSettings((s) => s.sidebarWorkingShelfEnabled) && folderGroups === null;

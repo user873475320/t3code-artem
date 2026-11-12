@@ -5,6 +5,7 @@ import {
   groupCustomSections,
   INITIAL_CUSTOM_SECTIONS,
   moveSectionThread,
+  parseCustomSectionsSnapshot,
   removeCustomSection,
   reorderCustomSection,
   sectionForThread,
@@ -20,8 +21,32 @@ describe("personal sidebar sections", () => {
     const a = moveSectionThread(INITIAL_CUSTOM_SECTIONS, "mac:thread", first);
     const b = moveSectionThread(a, "vps:thread", second);
     const restored = decodeSections(JSON.stringify(b));
+    expect(parseCustomSectionsSnapshot(JSON.stringify(b))).toEqual(b);
     expect(sectionForThread(restored, "mac:thread")).toBe(first);
     expect(sectionForThread(restored, "vps:thread")).toBe(second);
+  });
+  it.each([
+    "not JSON",
+    "{}",
+    JSON.stringify({
+      ...INITIAL_CUSTOM_SECTIONS,
+      sections: [...INITIAL_CUSTOM_SECTIONS.sections, INITIAL_CUSTOM_SECTIONS.sections[0]],
+    }),
+    JSON.stringify({
+      ...INITIAL_CUSTOM_SECTIONS,
+      sections: [{ id: UNASSIGNED_SECTION, name: "Reserved", collapsed: false, threadKeys: [] }],
+    }),
+    JSON.stringify({
+      ...INITIAL_CUSTOM_SECTIONS,
+      sections: [{ id: "a", name: " ", collapsed: false, threadKeys: [] }],
+    }),
+    JSON.stringify({
+      ...INITIAL_CUSTOM_SECTIONS,
+      sections: [{ id: "a", name: "One", collapsed: false, threadKeys: ["mac:one"] }],
+      unassignedOrder: ["mac:one"],
+    }),
+  ])("rejects a malformed or ambiguous imported layout", (value) => {
+    expect(parseCustomSectionsSnapshot(value)).toBeNull();
   });
   it("preserves filtered and disconnected threads and returns them in their saved order", () => {
     let state = moveSectionThread(INITIAL_CUSTOM_SECTIONS, "a", first);

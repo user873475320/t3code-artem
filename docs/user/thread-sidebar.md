@@ -9,8 +9,13 @@ Use the **Мои разделы** icon beside the project filter to organize cha
 own named sections. Drag a chat onto a section heading, including a collapsed
 section, or right-click it and choose **Переместить в раздел**. Drag within a section
 to change the order. The section menu renames, reorders, or removes the section;
-removing it keeps its chats under **Без раздела**. **Загрузить ещё чаты** reveals older
-history. Use the same icon to switch back to the standard sidebar.
+removing it keeps its chats under **Без раздела**. Assigned older chats load
+automatically; **Загрузить ещё чаты** reveals the remaining history. Use the same
+icon to switch back to the standard sidebar.
+
+Use **Перенести разделы** beside the section heading to copy a layout or apply a
+saved one. Applying replaces the section layout without deleting chats. Import
+the chats themselves separately; layouts identify them within their environment.
 
 Sections are saved on this computer, independently of the agent's active, pinned,
 snoozed, or settled state. Moving a chat does not start or stop the agent. Sections

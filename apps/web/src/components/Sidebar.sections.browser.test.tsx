@@ -16,10 +16,15 @@ import {
   type FakeDriver,
 } from "../../test/fakeEnvironment";
 import { act, render } from "../../test/render";
-import { getLocalStorageItem, removeLocalStorageItem } from "../hooks/useLocalStorage";
+import {
+  getLocalStorageItem,
+  removeLocalStorageItem,
+  setLocalStorageItem,
+} from "../hooks/useLocalStorage";
 import {
   CUSTOM_SECTIONS_KEY,
   CustomSectionsSchema,
+  INITIAL_CUSTOM_SECTIONS,
   sectionForThread,
 } from "./sidebar/customSections";
 
@@ -38,12 +43,29 @@ vi.mock(import("~/rpc/requestLatencyState"), async (original) => ({
   trackRpcRequestSent: () => {},
 }));
 
-it("moves a thread into a collapsed personal section and retains the assignment after remount", async () => {
+it("restores older assigned threads and retains a drop into their collapsed section after remount", async () => {
   await page.viewport(1400, 900);
   removeLocalStorageItem(CUSTOM_SECTIONS_KEY);
   using _storage = { [Symbol.dispose]: () => removeLocalStorageItem(CUSTOM_SECTIONS_KEY) };
   const thread = threadWithHistory("personal-section", 1);
-  using _environment = installFakeEnvironment([thread]);
+  const older = { ...threadWithHistory("section-older", 1), olderSettled: true as const };
+  const unrelated = { ...threadWithHistory("section-unrelated", 1), olderSettled: true as const };
+  using _environment = installFakeEnvironment([thread, older, unrelated]);
+  setLocalStorageItem(
+    CUSTOM_SECTIONS_KEY,
+    {
+      ...INITIAL_CUSTOM_SECTIONS,
+      sections: INITIAL_CUSTOM_SECTIONS.sections.map((section) =>
+        section.id === "section-2"
+          ? {
+              ...section,
+              threadKeys: [`${ENVIRONMENT_ID}:${older.id}`, `${ENVIRONMENT_ID}:deleted-thread`],
+            }
+          : section,
+      ),
+    },
+    CustomSectionsSchema,
+  );
   __setClientSettingsForTests({
     ...DEFAULT_CLIENT_SETTINGS,
     boringSidebarEnabled: true,
@@ -59,7 +81,8 @@ it("moves a thread into a collapsed personal section and retains the assignment 
       .element(page.getByRole("button", { name: /^render/ }))
       .toHaveAttribute("aria-expanded", "true");
     await userEvent.click(page.getByRole("button", { name: "Мои разделы", exact: true }));
-    const target = page.getByRole("button", { name: "Разработка: 0", exact: true });
+    const target = page.getByRole("button", { name: "Разработка: 1", exact: true });
+    await expect.element(target).toBeVisible();
     await userEvent.click(target);
     await expect.element(target).toHaveAttribute("aria-expanded", "false");
     const row = page.getByRole("button", { name: new RegExp(thread.title) }).first();
@@ -91,17 +114,23 @@ it("moves a thread into a collapsed personal section and retains the assignment 
       document.dispatchEvent(pointer("pointerup", to.x + 40, to.y + 12));
     });
     await expect
-      .element(page.getByRole("button", { name: "Разработка: 1", exact: true }))
+      .element(page.getByRole("button", { name: "Разработка: 2", exact: true }))
       .toBeVisible();
     const state = getLocalStorageItem(CUSTOM_SECTIONS_KEY, CustomSectionsSchema)!;
     expect(sectionForThread(state, `${ENVIRONMENT_ID}:${thread.id}`)).toBe("section-2");
   }
   await using _app = await render(<AppRoot router={router} />, { router: false });
   await expect
-    .element(page.getByRole("button", { name: "Разработка: 1", exact: true }))
+    .element(page.getByRole("button", { name: "Разработка: 2", exact: true }))
     .toHaveAttribute("aria-expanded", "false");
-  await userEvent.click(page.getByRole("button", { name: "Разработка: 1", exact: true }));
+  await userEvent.click(page.getByRole("button", { name: "Разработка: 2", exact: true }));
   await expect
     .element(page.getByRole("button", { name: new RegExp(thread.title) }).first())
     .toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: new RegExp(older.title) }).first())
+    .toBeVisible();
+  await expect
+    .element(page.getByRole("button", { name: new RegExp(unrelated.title) }))
+    .not.toBeInTheDocument();
 });

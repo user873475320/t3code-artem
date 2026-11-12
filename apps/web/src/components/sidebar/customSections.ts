@@ -1,4 +1,5 @@
 import * as Schema from "effect/Schema";
+import * as Option from "effect/Option";
 
 export const UNASSIGNED_SECTION = "__unassigned__";
 export const CUSTOM_SECTIONS_KEY = "t3code-artem:sections:v1";
@@ -16,6 +17,36 @@ export const CustomSectionsSchema = Schema.Struct({
 });
 export type CustomSectionsState = typeof CustomSectionsSchema.Type;
 export type CustomSection = CustomSectionsState["sections"][number];
+const decodeSectionsSnapshot = Schema.decodeUnknownOption(CustomSectionsSchema);
+
+export function parseCustomSectionsSnapshot(value: string): CustomSectionsState | null {
+  if (value.length > 1_000_000) return null;
+  try {
+    const decoded = decodeSectionsSnapshot(JSON.parse(value));
+    if (Option.isNone(decoded)) return null;
+    const state = decoded.value;
+    const ids = new Set<string>();
+    const names = new Set<string>();
+    const keys = new Set<string>();
+    for (const section of state.sections) {
+      const name = section.name.trim().toLocaleLowerCase();
+      if (!section.id || section.id === UNASSIGNED_SECTION || ids.has(section.id)) return null;
+      if (!name || section.name.length > 80 || names.has(name)) return null;
+      ids.add(section.id);
+      names.add(name);
+    }
+    for (const key of [
+      ...state.sections.flatMap((section) => section.threadKeys),
+      ...state.unassignedOrder,
+    ]) {
+      if (!key || keys.has(key)) return null;
+      keys.add(key);
+    }
+    return state;
+  } catch {
+    return null;
+  }
+}
 
 export const INITIAL_CUSTOM_SECTIONS: CustomSectionsState = {
   enabled: false,
